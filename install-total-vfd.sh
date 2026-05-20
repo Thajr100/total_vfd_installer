@@ -7,9 +7,16 @@
 # One-line (no clone): curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
 # Optional: cp .env.example .env to set DEFAULT_ZIP_URL
 #
-set -euo pipefail
+# SCRIPT_DIR before set -u: BASH_SOURCE[0] is unset when the script is piped (curl | bash).
+_script_ref="${BASH_SOURCE[0]:-${0:-}}"
+case "$_script_ref" in
+  '' | bash | /bin/bash | */bash) SCRIPT_DIR="${PWD}" ;;
+  -*) SCRIPT_DIR="${PWD}" ;;
+  *) SCRIPT_DIR="$(cd "$(dirname "$_script_ref")" && pwd)" ;;
+esac
+unset _script_ref
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+set -euo pipefail
 CONFIG_FILE="${TOTAL_VFD_INSTALLER_CONFIG:-$HOME/.config/total_vfd/installer.conf}"
 STATE_DIR="${TMPDIR:-/tmp}/total_vfd_installer_$$"
 MODULE_DIR_NAME="total_vfd"
