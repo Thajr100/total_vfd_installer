@@ -14,7 +14,25 @@ No Odoo coding knowledge required — answer the questions, then finish in the O
 
 ---
 
-## Quick start
+## One-line install (on the Odoo server)
+
+Download and run the installer without cloning the repo:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
+```
+
+To save the script locally (so you can add a `.env` with `DEFAULT_ZIP_URL`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh -o install-total-vfd.sh && chmod +x install-total-vfd.sh && ./install-total-vfd.sh
+```
+
+Script source: [install-total-vfd.sh](https://github.com/Thajr100/total_vfd_installer/blob/main/install-total-vfd.sh)
+
+---
+
+## Quick start (clone or copy folder)
 
 ```bash
 # 1) Copy this folder to the Odoo server (or clone this repo)

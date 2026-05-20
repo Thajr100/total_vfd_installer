@@ -4,6 +4,7 @@
 # Works with Docker or standard (non-Docker) Odoo on Linux/macOS.
 #
 # Usage: ./install-total-vfd.sh
+# One-line (no clone): curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
 # Optional: copy config.example.env to .env and set DEFAULT_ZIP_URL
 #
 set -euo pipefail
@@ -418,6 +419,9 @@ Usage:
   $0 --install          Skip menu, run install wizard
   $0 --update           Skip menu, run update wizard
   $0 --update --docker --zip-url URL --container NAME --addons-path /mnt/extra-addons
+
+One-line install (download and run, no git clone):
+  curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
 
 Environment / files:
   .env                  DEFAULT_ZIP_URL=...
