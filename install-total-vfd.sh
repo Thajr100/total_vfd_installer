@@ -40,6 +40,26 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# curl ... | bash leaves stdin as the pipe (not the keyboard), so read skips questions.
+ensure_interactive_stdin() {
+  if [[ -t 0 ]]; then
+    return 0
+  fi
+  if [[ -r /dev/tty ]]; then
+    exec 0</dev/tty
+    if [[ -t 1 ]]; then
+      printf '%b\n' "${CYAN}→${RESET} Interactive mode: answer the prompts on your keyboard."
+      printf '\n'
+    fi
+    return 0
+  fi
+  err "This installer needs an interactive terminal for questions."
+  err "Do not pipe the script without a TTY. Instead run:"
+  err "  curl -fsSL <url> -o install-total-vfd.sh && chmod +x install-total-vfd.sh && ./install-total-vfd.sh"
+  err "Or pass flags: $0 --update --docker --container odoo --addons-path /mnt/extra-addons"
+  exit 1
+}
+
 load_env() {
   if [[ -f "$SCRIPT_DIR/.env" ]]; then
     # shellcheck disable=SC1091
@@ -99,11 +119,12 @@ ask() {
   local default="${2:-}"
   local reply=""
   if [[ -n "$default" ]]; then
-    read -r -p "$prompt [$default]: " reply
+    read -r -p "$prompt [$default]: " reply || true
     reply="${reply:-$default}"
   else
     while [[ -z "$reply" ]]; do
-      read -r -p "$prompt: " reply
+      read -r -p "$prompt: " reply || true
+      [[ -z "$reply" ]] && warn "A value is required."
     done
   fi
   printf '%s' "$reply"
@@ -116,13 +137,19 @@ ask_yes_no() {
   local hint="Y/n"
   [[ "$default" == "n" ]] && hint="y/N"
   local reply=""
-  read -r -p "$prompt ($hint): " reply
-  reply="${reply:-$default}"
-  [[ "$reply" =~ ^[Yy] ]]
+  while true; do
+    read -r -p "$prompt ($hint): " reply || true
+    reply="${reply:-$default}"
+    case "$reply" in
+      [Yy]|[Yy][Ee][Ss]) return 0 ;;
+      [Nn]|[Nn][Oo]) return 1 ;;
+      *) warn "Please answer y or n." ;;
+    esac
+  done
 }
 
 pause_enter() {
-  read -r -p "Press Enter to continue..."
+  read -r -p "Press Enter to continue..." _ || true
 }
 
 print_odoo_ui_steps() {
@@ -293,7 +320,9 @@ deploy_to_native() {
 }
 
 install_qr_packages_docker() {
-  collect_docker_settings
+  if [[ -z "${DOCKER_CONTAINER:-}" ]]; then
+    collect_docker_settings
+  fi
   title "Python packages for QR codes (Docker)"
   warn "Fiscalisation works without these; PDF QR images need qrcode + Pillow."
   if ! ask_yes_no "Install qrcode and Pillow inside container ${DOCKER_CONTAINER}?" "y"; then
@@ -319,13 +348,15 @@ install_qr_packages_native() {
 
 run_install_or_update() {
   local action="$1" # install | update
+  ensure_interactive_stdin
   load_saved_config
   require_commands
   load_env
 
   title "Total VFD — Odoo module ${action}"
-  echo "This wizard copies the module to your server and restarts Odoo."
-  echo "You will still click Install or Upgrade inside the Odoo website."
+  echo "Step-by-step wizard. Press Enter to accept [defaults] in brackets."
+  echo "This copies the module to your server and restarts Odoo."
+  echo "You still complete Install or Upgrade in the Odoo website afterward."
   printf '\n'
 
   if [[ "$action" == "update" ]] && [[ -f "$CONFIG_FILE" ]]; then
@@ -393,9 +424,12 @@ show_saved_config() {
 }
 
 main_menu() {
+  ensure_interactive_stdin
   load_env
   while true; do
     title "Total VFD installer"
+    echo "Choose what you want to do. The script will ask a few simple questions."
+    printf '\n'
     echo "  1) Install module (first time on this server)"
     echo "  2) Update module (new zip from your vendor)"
     echo "  3) Install QR Python packages only (qrcode + Pillow)"
@@ -449,8 +483,11 @@ Usage:
   $0 --update           Skip menu, run update wizard
   $0 --update --docker --zip-url URL --container NAME --addons-path /mnt/extra-addons
 
-One-line install (download and run, no git clone):
+One-line install (asks questions on your keyboard via /dev/tty):
   curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
+
+Non-interactive update (no prompts):
+  $0 --update --docker --zip-url URL --container odoo --addons-path /mnt/extra-addons
 
 Environment / files:
   .env                  DEFAULT_ZIP_URL (see .env.example)
@@ -463,11 +500,13 @@ EOF
 fi
 
 if [[ "${1:-}" == "--install" ]]; then
+  ensure_interactive_stdin
   run_install_or_update "install"
   exit 0
 fi
 
 if [[ "${1:-}" == "--update" ]]; then
+  ensure_interactive_stdin
   load_env
   shift
   while [[ $# -gt 0 ]]; do
@@ -486,6 +525,11 @@ if [[ "${1:-}" == "--update" ]]; then
   done
   run_install_or_update "update"
   exit 0
+fi
+
+# curl | bash: stdin is the pipe; attach keyboard so menu and read prompts work
+if [[ ! -t 0 ]] && [[ $# -eq 0 ]]; then
+  ensure_interactive_stdin
 fi
 
 main_menu

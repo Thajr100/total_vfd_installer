@@ -22,6 +22,10 @@ Download and run the installer without cloning the repo:
 curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
 ```
 
+The script will **ask questions** on your keyboard (Docker or normal install, zip URL, container name, etc.). If prompts seemed to skip instantly before, update to the latest `install-total-vfd.sh` (it reconnects to your terminal when run via `curl | bash`).
+
+**Recommended** — save the script, then run it (same questions, easier to re-run):
+
 To save the script locally (so you can use `.env` with `DEFAULT_ZIP_URL`):
 
 ```bash
