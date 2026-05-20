@@ -217,10 +217,13 @@ get_zip_url() {
 }
 
 download_zip() {
+  # Only the final path goes to stdout (used by zip_path="$(download_zip)").
   mkdir -p "$STATE_DIR"
   local dest="$STATE_DIR/$ZIP_NAME"
-  title "Downloading module"
-  info "From: $ZIP_URL"
+  {
+    title "Downloading module"
+    info "From: $ZIP_URL"
+  } >&2
   if ! curl -fsSL --connect-timeout 30 --max-time 600 -o "$dest" "$ZIP_URL"; then
     err "Download failed. Check the URL and your internet connection."
     exit 1
@@ -229,15 +232,25 @@ download_zip() {
     err "Downloaded file is empty."
     exit 1
   fi
-  ok "Downloaded $(du -h "$dest" | awk '{print $1}') → $dest"
-  echo "$dest"
+  ok "Downloaded $(du -h "$dest" | awk '{print $1}') → $dest" >&2
+  printf '%s\n' "$dest"
 }
 
 verify_zip() {
   local zip_path="$1"
-  if ! unzip -l "$zip_path" | grep -q "${MODULE_DIR_NAME}/__manifest__.py"; then
+  if [[ ! -f "$zip_path" ]]; then
+    err "Zip file not found: $zip_path"
+    exit 1
+  fi
+  if ! unzip -tq "$zip_path" >/dev/null 2>&1; then
+    err "Downloaded file is not a valid zip archive: $zip_path"
+    exit 1
+  fi
+  if ! unzip -l "$zip_path" 2>/dev/null | grep -q "${MODULE_DIR_NAME}/__manifest__.py"; then
     err "This zip does not look like a Total VFD Odoo module."
     err "Expected ${MODULE_DIR_NAME}/__manifest__.py inside the archive."
+    err "Archive listing (first entries):"
+    unzip -l "$zip_path" 2>/dev/null | head -15 >&2 || true
     exit 1
   fi
   ok "Zip contents look valid."
