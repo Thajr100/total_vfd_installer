@@ -27,6 +27,7 @@ esac
 set -eo pipefail
 CONFIG_FILE="${TOTAL_VFD_INSTALLER_CONFIG:-$HOME/.config/total_vfd/installer.conf}"
 STATE_DIR="${TMPDIR:-/tmp}/total_vfd_installer_$$"
+DOWNLOADED_ZIP_PATH=""
 MODULE_DIR_NAME="total_vfd"
 ZIP_NAME="total_vfd.zip"
 DEFAULT_ZIP_URL_BUILTIN="https://emsspace.sfo3.cdn.digitaloceanspaces.com/plugins/total_vfd.zip"
@@ -217,13 +218,11 @@ get_zip_url() {
 }
 
 download_zip() {
-  # Only the final path goes to stdout (used by zip_path="$(download_zip)").
+  # Sets DOWNLOADED_ZIP_PATH (never use $(download_zip) — stdout from title/info/ok breaks the path).
   mkdir -p "$STATE_DIR"
   local dest="$STATE_DIR/$ZIP_NAME"
-  {
-    title "Downloading module"
-    info "From: $ZIP_URL"
-  } >&2
+  title "Downloading module"
+  info "From: $ZIP_URL"
   if ! curl -fsSL --connect-timeout 30 --max-time 600 -o "$dest" "$ZIP_URL"; then
     err "Download failed. Check the URL and your internet connection."
     exit 1
@@ -232,8 +231,8 @@ download_zip() {
     err "Downloaded file is empty."
     exit 1
   fi
-  ok "Downloaded $(du -h "$dest" | awk '{print $1}') → $dest" >&2
-  printf '%s\n' "$dest"
+  ok "Downloaded $(du -h "$dest" | awk '{print $1}') → $dest"
+  DOWNLOADED_ZIP_PATH="$dest"
 }
 
 verify_zip() {
@@ -411,8 +410,8 @@ run_install_or_update() {
     exit 0
   fi
 
-  local zip_path
-  zip_path="$(download_zip)"
+  download_zip
+  local zip_path="$DOWNLOADED_ZIP_PATH"
   verify_zip "$zip_path"
 
   if [[ "$INSTALL_MODE" == "docker" ]]; then
