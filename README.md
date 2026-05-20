@@ -9,7 +9,7 @@ No Odoo coding knowledge required — answer the questions, then finish in the O
 ## What you need
 
 - **SSH access** to the machine that runs Odoo (or run the script on that machine).
-- A **download link** to `total_vfd.zip` from your vendor (HTTPS recommended).
+- A **download link** to `total_vfd.zip` — default is the zip in [this repo](https://github.com/Thajr100/total_vfd_installer/blob/main/total_vfd.zip); you can paste your own URL instead.
 - **sudo** may be needed on non-Docker installs (restart service, file permissions).
 
 ---
@@ -43,13 +43,15 @@ chmod +x install-total-vfd.sh
 ./install-total-vfd.sh
 ```
 
-Optional: set a default zip URL so you are not asked every time:
+Optional: pin a zip URL in `.env` (default is the repo zip; blob GitHub links are converted automatically):
 
 ```bash
 cp config.example.env .env
-# Edit .env → DEFAULT_ZIP_URL=https://...
+# DEFAULT_ZIP_URL is already set to the repo zip — edit if you host your own copy
 ./install-total-vfd.sh
 ```
+
+When you run the wizard, it asks **Use the default download URL?** — press Enter for yes, or paste another HTTPS link.
 
 ---
 

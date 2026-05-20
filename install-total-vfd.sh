@@ -14,6 +14,9 @@ CONFIG_FILE="${TOTAL_VFD_INSTALLER_CONFIG:-$HOME/.config/total_vfd/installer.con
 STATE_DIR="${TMPDIR:-/tmp}/total_vfd_installer_$$"
 MODULE_DIR_NAME="total_vfd"
 ZIP_NAME="total_vfd.zip"
+# GitHub blob link (shown to users); curl needs the raw URL below.
+DEFAULT_ZIP_URL_DISPLAY="https://github.com/Thajr100/total_vfd_installer/blob/main/total_vfd.zip"
+DEFAULT_ZIP_URL_BUILTIN="https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/total_vfd.zip"
 
 # --- styling (only when interactive terminal) ---
 if [[ -t 1 ]]; then
@@ -66,6 +69,17 @@ NATIVE_ODOO_USER="${NATIVE_ODOO_USER:-odoo}"
 NATIVE_RESTART_CMD="${NATIVE_RESTART_CMD:-}"
 EOF
   chmod 600 "$CONFIG_FILE" 2>/dev/null || true
+}
+
+normalize_zip_url() {
+  # GitHub "blob" pages are not direct downloads — convert to raw.githubusercontent.com.
+  local url="$1"
+  if [[ "$url" =~ ^https://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.*)$ ]]; then
+    printf 'https://raw.githubusercontent.com/%s/%s/%s/%s' \
+      "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[4]}"
+  else
+    printf '%s' "$url"
+  fi
 }
 
 require_commands() {
@@ -131,18 +145,34 @@ EOF
 }
 
 get_zip_url() {
-  local url="${ZIP_URL:-${DEFAULT_ZIP_URL:-}}"
-  if [[ -z "$url" ]]; then
-    title "Download link"
-    echo "Your vendor should give you a web link (HTTPS) to total_vfd.zip."
-    url="$(ask "Paste the full URL to total_vfd.zip" "")"
-  else
-    info "Using zip URL: $url"
-    if ! ask_yes_no "Use this download URL?" "y"; then
-      url="$(ask "Paste the full URL to total_vfd.zip" "$url")"
+  local default_raw
+  default_raw="$(normalize_zip_url "${DEFAULT_ZIP_URL:-$DEFAULT_ZIP_URL_BUILTIN}")"
+  local url="${ZIP_URL:-}"
+
+  if [[ -n "$url" ]]; then
+    url="$(normalize_zip_url "$url")"
+    info "Download URL: $url"
+    if ask_yes_no "Use this download URL?" "y"; then
+      ZIP_URL="$url"
+      return
     fi
+    url=""
   fi
-  ZIP_URL="$url"
+
+  title "Module download"
+  echo "Default download URL:"
+  echo "  ${DEFAULT_ZIP_URL:-$DEFAULT_ZIP_URL_DISPLAY}"
+  printf '\n'
+  if ask_yes_no "Use the default download URL?" "y"; then
+    ZIP_URL="$default_raw"
+  else
+    url="$(ask "Paste HTTPS URL to total_vfd.zip" "")"
+    while [[ -z "$url" ]]; do
+      url="$(ask "Paste HTTPS URL to total_vfd.zip" "")"
+    done
+    ZIP_URL="$(normalize_zip_url "$url")"
+  fi
+  info "Will download from: $ZIP_URL"
 }
 
 download_zip() {
@@ -395,9 +425,9 @@ main_menu() {
       4) show_saved_config ; pause_enter ;;
       5)
         title "Help"
-        cat <<'EOF'
+        cat <<EOF
   • You need SSH access to the Odoo server (or run this on that machine).
-  • You need a download URL for total_vfd.zip from your vendor.
+  • Default zip: $DEFAULT_ZIP_URL_DISPLAY (or paste your own HTTPS link).
   • This script does NOT configure license or Total VFD API — do that in Odoo Settings.
   • Never use Apps → Import Module for Total VFD (use Install from addons path).
   • For updates: run option 2, then Upgrade the app in Odoo Apps.
@@ -424,8 +454,11 @@ One-line install (download and run, no git clone):
   curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
 
 Environment / files:
-  .env                  DEFAULT_ZIP_URL=...
+  .env                  DEFAULT_ZIP_URL (default: repo total_vfd.zip on GitHub)
   \$CONFIG_FILE         Default: ~/.config/total_vfd/installer.conf
+
+Default module zip:
+  $DEFAULT_ZIP_URL_DISPLAY
 EOF
   exit 0
 fi
