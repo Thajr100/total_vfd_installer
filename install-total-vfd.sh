@@ -4,19 +4,27 @@
 # Works with Docker or standard (non-Docker) Odoo on Linux/macOS.
 #
 # Usage: ./install-total-vfd.sh
-# One-line (no clone): curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
+# Recommended one-line (saves script first — most reliable on servers):
+#   curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh -o install-total-vfd.sh && bash install-total-vfd.sh
 # Optional: cp .env.example .env to set DEFAULT_ZIP_URL
 #
-# SCRIPT_DIR before set -u: BASH_SOURCE[0] is unset when the script is piped (curl | bash).
-_script_ref="${BASH_SOURCE[0]:-${0:-}}"
-case "$_script_ref" in
-  '' | bash | /bin/bash | */bash) SCRIPT_DIR="${PWD}" ;;
-  -*) SCRIPT_DIR="${PWD}" ;;
-  *) SCRIPT_DIR="$(cd "$(dirname "$_script_ref")" && pwd)" ;;
-esac
-unset _script_ref
+set +u 2>/dev/null || true
 
-set -euo pipefail
+case "${0:-bash}" in
+  bash | /bin/bash | /usr/bin/bash | dash | /bin/dash | sh | /bin/sh | -* | *bash)
+    SCRIPT_DIR="${PWD}"
+    ;;
+  *)
+    if [[ -r "${0}" ]]; then
+      SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+    else
+      SCRIPT_DIR="${PWD}"
+    fi
+    ;;
+esac
+
+# -e and pipefail only (no -u): avoids unbound errors in piped / minimal bash environments.
+set -eo pipefail
 CONFIG_FILE="${TOTAL_VFD_INSTALLER_CONFIG:-$HOME/.config/total_vfd/installer.conf}"
 STATE_DIR="${TMPDIR:-/tmp}/total_vfd_installer_$$"
 MODULE_DIR_NAME="total_vfd"
@@ -62,7 +70,7 @@ ensure_interactive_stdin() {
   fi
   err "This installer needs an interactive terminal for questions."
   err "Do not pipe the script without a TTY. Instead run:"
-  err "  curl -fsSL <url> -o install-total-vfd.sh && chmod +x install-total-vfd.sh && ./install-total-vfd.sh"
+  err "  curl -fsSL <url> -o install-total-vfd.sh && chmod +x install-total-vfd.sh && bash install-total-vfd.sh"
   err "Or pass flags: $0 --update --docker --container odoo --addons-path /mnt/extra-addons"
   exit 1
 }
@@ -490,8 +498,8 @@ Usage:
   $0 --update           Skip menu, run update wizard
   $0 --update --docker --zip-url URL --container NAME --addons-path /mnt/extra-addons
 
-One-line install (asks questions on your keyboard via /dev/tty):
-  curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
+Recommended one-line install:
+  curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh -o install-total-vfd.sh && bash install-total-vfd.sh
 
 Non-interactive update (no prompts):
   $0 --update --docker --zip-url URL --container odoo --addons-path /mnt/extra-addons

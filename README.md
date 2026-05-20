@@ -19,18 +19,12 @@ No Odoo coding knowledge required — answer the questions, then finish in the O
 Download and run the installer without cloning the repo:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh -o install-total-vfd.sh && bash install-total-vfd.sh
 ```
 
-The script will **ask questions** on your keyboard (Docker or normal install, zip URL, container name, etc.). If prompts seemed to skip instantly before, update to the latest `install-total-vfd.sh` (it reconnects to your terminal when run via `curl | bash`).
+The script asks questions on your keyboard (Docker or normal install, zip URL, container name, etc.).
 
-**Recommended** — save the script, then run it (same questions, easier to re-run):
-
-To save the script locally (so you can use `.env` with `DEFAULT_ZIP_URL`):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh -o install-total-vfd.sh && chmod +x install-total-vfd.sh && ./install-total-vfd.sh
-```
+Do **not** use `curl … | bash` on some servers — it can exit with `BASH_SOURCE[0]: unbound variable`. Saving the file first (command above) avoids that.
 
 Script source: [install-total-vfd.sh](https://github.com/Thajr100/total_vfd_installer/blob/main/install-total-vfd.sh)
 
