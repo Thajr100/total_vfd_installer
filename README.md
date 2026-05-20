@@ -9,7 +9,7 @@ No Odoo coding knowledge required — answer the questions, then finish in the O
 ## What you need
 
 - **SSH access** to the machine that runs Odoo (or run the script on that machine).
-- A **download link** to `total_vfd.zip` — default is the zip in [this repo](https://github.com/Thajr100/total_vfd_installer/blob/main/total_vfd.zip); you can paste your own URL instead.
+- A **download link** to `total_vfd.zip` — default is the hosted zip on DigitalOcean Spaces; you can paste another URL instead.
 - **sudo** may be needed on non-Docker installs (restart service, file permissions).
 
 ---
@@ -22,7 +22,7 @@ Download and run the installer without cloning the repo:
 curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
 ```
 
-To save the script locally (so you can add a `.env` with `DEFAULT_ZIP_URL`):
+To save the script locally (so you can use `.env` with `DEFAULT_ZIP_URL`):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh -o install-total-vfd.sh && chmod +x install-total-vfd.sh && ./install-total-vfd.sh
@@ -43,11 +43,12 @@ chmod +x install-total-vfd.sh
 ./install-total-vfd.sh
 ```
 
-Optional: pin a zip URL in `.env` (default is the repo zip; blob GitHub links are converted automatically):
+Optional: copy `.env.example` to `.env` to pin the default zip URL (or your own):
 
 ```bash
-cp config.example.env .env
-# DEFAULT_ZIP_URL is already set to the repo zip — edit if you host your own copy
+cp .env.example .env
+# Edit .env if needed — default:
+# DEFAULT_ZIP_URL=https://emsspace.sfo3.cdn.digitaloceanspaces.com/plugins/total_vfd.zip
 ./install-total-vfd.sh
 ```
 

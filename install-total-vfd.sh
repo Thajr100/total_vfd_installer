@@ -5,7 +5,7 @@
 #
 # Usage: ./install-total-vfd.sh
 # One-line (no clone): curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
-# Optional: copy config.example.env to .env and set DEFAULT_ZIP_URL
+# Optional: cp .env.example .env to set DEFAULT_ZIP_URL
 #
 set -euo pipefail
 
@@ -14,9 +14,8 @@ CONFIG_FILE="${TOTAL_VFD_INSTALLER_CONFIG:-$HOME/.config/total_vfd/installer.con
 STATE_DIR="${TMPDIR:-/tmp}/total_vfd_installer_$$"
 MODULE_DIR_NAME="total_vfd"
 ZIP_NAME="total_vfd.zip"
-# GitHub blob link (shown to users); curl needs the raw URL below.
-DEFAULT_ZIP_URL_DISPLAY="https://github.com/Thajr100/total_vfd_installer/blob/main/total_vfd.zip"
-DEFAULT_ZIP_URL_BUILTIN="https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/total_vfd.zip"
+DEFAULT_ZIP_URL_BUILTIN="https://emsspace.sfo3.cdn.digitaloceanspaces.com/plugins/total_vfd.zip"
+DEFAULT_ZIP_URL_DISPLAY="$DEFAULT_ZIP_URL_BUILTIN"
 
 # --- styling (only when interactive terminal) ---
 if [[ -t 1 ]]; then
@@ -454,7 +453,7 @@ One-line install (download and run, no git clone):
   curl -fsSL https://raw.githubusercontent.com/Thajr100/total_vfd_installer/main/install-total-vfd.sh | bash
 
 Environment / files:
-  .env                  DEFAULT_ZIP_URL (default: repo total_vfd.zip on GitHub)
+  .env                  DEFAULT_ZIP_URL (see .env.example)
   \$CONFIG_FILE         Default: ~/.config/total_vfd/installer.conf
 
 Default module zip:
