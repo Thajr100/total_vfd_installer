@@ -1,4 +1,3 @@
-*.zip
 *.log
 .env
 .DS_Store
